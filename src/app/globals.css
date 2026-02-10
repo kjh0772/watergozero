@@ -6,20 +6,24 @@
   --irrigation-primary: #0d9488;
   --irrigation-secondary: #0f766e;
   --irrigation-accent: #14b8a6;
+  /* HMI 800x480 대응: 한 페이지에 모두 표시 */
+  --hmi-nav-height: 28px;
+  --hmi-main-gap: 6px;
 }
 
 body {
   @apply bg-slate-900 text-slate-100 antialiased;
 }
 
+/* HMI 소형 화면: 카드·버튼 컴팩트 */
 @layer components {
   .card {
-    @apply rounded-xl border border-slate-700 bg-slate-800/80 p-4 shadow-lg;
+    @apply rounded-lg border border-slate-700 bg-slate-800/80 p-2 shadow;
   }
   .btn-primary {
-    @apply rounded-lg bg-teal-600 px-4 py-2 font-medium text-white transition hover:bg-teal-500;
+    @apply rounded-md bg-teal-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-teal-500;
   }
   .btn-secondary {
-    @apply rounded-lg border border-slate-600 bg-slate-700 px-4 py-2 font-medium transition hover:bg-slate-600;
+    @apply rounded-md border border-slate-600 bg-slate-700 px-3 py-1.5 text-sm font-medium transition hover:bg-slate-600;
   }
 }
