@@ -1,0 +1,31 @@
+# dependencies
+node_modules
+.pnp
+.pnp.js
+
+# build
+.next
+out
+dist
+build
+
+# env (do not modify .env.local per project rules)
+.env*.local
+
+# DB data (optional: remove if you want to commit DB files)
+data/*.db
+data/*.db-wal
+data/*.db-shm
+
+# misc
+.DS_Store
+*.pem
+*.log
+npm-debug.log*
+
+# IDE
+.idea
+.vscode
+
+# TypeScript
+next-env.d.ts
