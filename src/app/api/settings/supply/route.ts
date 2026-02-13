@@ -5,11 +5,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupplyDb } from "@/lib/db";
 import { ZONE_COUNT } from "@/lib/constants";
+import { startTriggerScheduler } from "@/lib/triggerScheduler";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
+    // 변경: 공급설정 조회 시에도 트리거 스케줄러 기동 (테스트/설정 페이지만 열었을 때도 동작)
+    startTriggerScheduler();
     const db = getSupplyDb();
     const mode = db.prepare("SELECT * FROM supply_mode WHERE id = 1").get();
     const trigger = db.prepare("SELECT * FROM supply_trigger WHERE id = 1").get();
@@ -49,7 +52,7 @@ export async function PATCH(request: NextRequest) {
         "UPDATE zone_settings SET name=?, duration_seconds=?, sort_order=?, enabled=?, updated_at=datetime('now') WHERE zone_id=?"
       );
       body.zones.forEach((z: { zone_id: number; name: string; duration_seconds: number; sort_order: number; enabled: number }) => {
-        stmt.run(z.name ?? "", z.duration_seconds ?? 300, z.sort_order ?? 0, z.enabled ?? 1, z.zone_id);
+        stmt.run(z.name ?? "", z.duration_seconds ?? 5, z.sort_order ?? 0, z.enabled ?? 1, z.zone_id);
       });
     }
 

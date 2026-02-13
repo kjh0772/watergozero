@@ -1,5 +1,5 @@
 /**
- * 출력 릴레이 매핑: P1~P4=1032~1035, 밸브0~11=1036~1047
+ * 출력 릴레이 매핑: 1032~1035 P1~P4, 1036~1047 밸브0~11
  * RunState(valves[12], pumps) → PLC 코일 배열(16) 변환
  */
 
@@ -28,8 +28,7 @@ export type RelayIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 
 
 /**
  * RunState(valves[12], pumps) → PLC 쓰기용 코일 배열 16개
- * - 인덱스 0~3: P1, P2, P3, P4
- * - 인덱스 4~15: 밸브 0~11
+ * 인덱스 0~3: P1~P4(1032~1035), 4~15: 밸브0~11(1036~1047)
  */
 export function buildCoilArrayFromRunState(
   valves: number[],
@@ -49,6 +48,7 @@ export function buildCoilArrayFromRunState(
 
 /**
  * 코일 배열 16개 → { valves[12], pumps } 형태로 해석 (읽기 반영 시 사용)
+ * 인덱스 0~3 P1~P4, 4~15 밸브0~11
  */
 export function parseCoilArrayToRunState(coils: boolean[]): {
   valves: number[];

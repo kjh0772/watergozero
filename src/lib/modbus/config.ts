@@ -21,11 +21,11 @@ export const TURNAROUND_SENSOR_MS = 8;
 /** 재연결 시도 간격 (ms) */
 export const RECONNECT_INTERVAL_MS = 5000;
 
-/** 기본 포트 목록: Windows COM, Linux tty (순서대로 재시도) */
+/** 기본 포트 목록: Windows COM, Linux tty (첫 항목이 기본 연결값) */
 export const DEFAULT_PORTS: string[] =
   typeof process !== "undefined" && process.platform === "win32"
     ? ["COM3", "COM4", "COM5"]
-    : ["/dev/serial1", "/dev/ttyUSB0", "/dev/ttyAMA0"];
+    : ["/dev/ttyUSB0", "/dev/serial1", "/dev/ttyAMA0"];
 
 /** Slave ID: PLC */
 export const SLAVE_ID_PLC = 1;
@@ -46,15 +46,11 @@ export const COIL_INDEX_RAIN_SENSOR = 0;
 export const COIL_WRITE_BASE = 1032;
 export const COIL_WRITE_LENGTH = 16;
 
-/** 출력 릴레이 매핑 (주소 1032~1047)
- * - 1032: P1, 1033: P2, 1034: P3, 1035: P4 (코일 인덱스 0~3)
- * - 1036~1047: 밸브 0~11 (코일 인덱스 4~15)
- */
+/** 출력 릴레이 (고정): 코일 0~3=P1~P4(1032~1035), 4~15=밸브0~11(1036~1047) */
 export const RELAY_INDEX_P1 = 0;
 export const RELAY_INDEX_P2 = 1;
 export const RELAY_INDEX_P3 = 2;
 export const RELAY_INDEX_P4 = 3;
-/** 코일 인덱스 4~15 = 밸브 0~11 */
 export const RELAY_INDEX_VALVE_START = 4;
 export const RELAY_INDEX_VALVE_END = 15;
 /** 코일에 매핑된 구역 밸브 수 */

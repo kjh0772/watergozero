@@ -56,7 +56,7 @@ initDb(SUPPLY_DB_PATH, SUPPLY_SCHEMAS, (db) => {
     "INSERT OR IGNORE INTO zone_settings (zone_id, name, duration_seconds, sort_order) VALUES (?, ?, ?, ?)"
   );
   for (let z = 1; z <= 12; z++) {
-    zoneStmt.run(z, `구역 ${z}`, 300, z);
+    zoneStmt.run(z, `구역 ${z}`, 5, z);
   }
 });
 

@@ -14,11 +14,13 @@ import {
 } from "@/lib/control";
 import { APP_VERSION } from "@/lib/version";
 import { getCurrentPort, isConnected } from "@/lib/modbus/client";
+import { startTriggerScheduler, getLastFiredTrigger } from "@/lib/triggerScheduler";
 import type { LiveStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  startTriggerScheduler();
   try {
     const db = getSystemDb();
     const now = new Date();
@@ -118,7 +120,7 @@ export async function GET() {
       }
     });
 
-    // PLC(Modbus) 연결 상태 (모듈 미연동 시 무시)
+    // PLC(Modbus) 실제 연결 상태 반영 (메인 화면 표시용)
     let plcConnected = false;
     let plcCurrentPort: string | null = null;
     try {
@@ -126,6 +128,46 @@ export async function GET() {
       plcCurrentPort = getCurrentPort();
     } catch {
       // modbus 미사용 시
+    }
+
+    // 공급 트리거 예약 요약 (메인 예약 카드용)
+    let triggerSummary: LiveStatus["triggerSummary"] = null;
+    try {
+      const modeRow = supplyDb.prepare("SELECT mode, weekly_days FROM supply_mode WHERE id = 1").get() as
+        | { mode: string; weekly_days: string }
+        | undefined;
+      const triggerRow = supplyDb.prepare("SELECT trigger_type, time_slots, interval_minutes FROM supply_trigger WHERE id = 1").get() as
+        | { trigger_type: string; time_slots: string; interval_minutes: number | null }
+        | undefined;
+      if (modeRow && triggerRow) {
+        let weeklyDays: number[] | undefined;
+        if (modeRow.weekly_days) {
+          try {
+            const parsed = JSON.parse(modeRow.weekly_days);
+            weeklyDays = Array.isArray(parsed) ? parsed.filter((n: unknown) => typeof n === "number") : undefined;
+          } catch {
+            // ignore
+          }
+        }
+        let timeSlots: string[] | undefined;
+        if (triggerRow.time_slots) {
+          try {
+            const parsed = JSON.parse(triggerRow.time_slots);
+            timeSlots = Array.isArray(parsed) ? parsed.map((s: unknown) => String(s)) : undefined;
+          } catch {
+            // ignore
+          }
+        }
+        triggerSummary = {
+          mode: modeRow.mode === "weekly" ? "weekly" : "daily",
+          weeklyDays,
+          triggerType: triggerRow.trigger_type === "interval" ? "interval" : "time",
+          timeSlots,
+          intervalMinutes: triggerRow.interval_minutes ?? null,
+        };
+      }
+    } catch {
+      // ignore
     }
 
     const status: LiveStatus = {
@@ -149,6 +191,8 @@ export async function GET() {
       zoneEnabled,
       plcConnected,
       plcCurrentPort,
+      triggerSummary,
+      lastFiredTrigger: getLastFiredTrigger(),
     };
 
     return NextResponse.json(status);

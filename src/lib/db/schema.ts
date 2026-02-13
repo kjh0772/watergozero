@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS zone_settings (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   zone_id INTEGER NOT NULL UNIQUE,
   name TEXT NOT NULL,
-  duration_seconds INTEGER NOT NULL DEFAULT 300,
+  duration_seconds INTEGER NOT NULL DEFAULT 5,
   sort_order INTEGER NOT NULL DEFAULT 0,
   enabled INTEGER DEFAULT 1,
   updated_at TEXT DEFAULT (datetime('now'))

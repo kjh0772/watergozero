@@ -113,4 +113,14 @@ export interface LiveStatus {
   plcConnected?: boolean;
   /** PLC 연결 포트 (연결됐을 때만) */
   plcCurrentPort?: string | null;
+  /** 공급 트리거 예약 요약 (메인 예약 카드용) */
+  triggerSummary?: {
+    mode: "daily" | "weekly";
+    weeklyDays?: number[];
+    triggerType: "time" | "interval";
+    timeSlots?: string[];
+    intervalMinutes?: number | null;
+  } | null;
+  /** 마지막 발동 트리거 (해당 트리거 표시용) */
+  lastFiredTrigger?: { type: "time" | "interval"; label: string; at: number } | null;
 }

@@ -28,8 +28,16 @@ interface ZoneRow {
 
 /** 1회 공급 시퀀스 실행 (비동기, 호출부에서 await 하지 않음) */
 export async function runSupplySequence(): Promise<void> {
-  if (getRunState().running) return;
-  if (getPendingCommand() !== "start_once") return;
+  const run = getRunState();
+  const pending = getPendingCommand();
+  if (run.running) {
+    console.log("[runSupplySequence] 스킵: 이미 공급 중");
+    return;
+  }
+  if (pending !== "start_once") {
+    console.log("[runSupplySequence] 스킵: pending 불일치", { pending });
+    return;
+  }
 
   setPendingCommand(null);
   const supplyDb = getSupplyDb();
@@ -39,6 +47,14 @@ export async function runSupplySequence(): Promise<void> {
       "SELECT zone_id, name, duration_seconds, enabled FROM zone_settings WHERE enabled = 1 AND zone_id <= ? ORDER BY zone_id"
     )
     .all(ZONE_COUNT) as ZoneRow[];
+
+  if (zones.length === 0) {
+    console.warn("[runSupplySequence] enabled=1인 구역이 없어 공급을 건너뜁니다.");
+    clearPendingCommand();
+    return;
+  }
+
+  console.log("[runSupplySequence] 시작, 구역 수:", zones.length, "zone_ids:", zones.map((z) => z.zone_id).join(","));
 
   for (const zone of zones) {
     if (isStopRequested()) {
@@ -60,7 +76,6 @@ export async function runSupplySequence(): Promise<void> {
       pumps: { p1: 1, p2: 1 },
       valves,
     });
-    // 변경: 실제 Modbus 릴레이 출력 (구역 밸브 + P1/P2 펌프)
     await applyRunStateToModbus(valves, { p1: 1, p2: 1 });
 
     const startedAt = new Date().toISOString();
@@ -74,18 +89,20 @@ export async function runSupplySequence(): Promise<void> {
     const durationMs = Math.max(0, zone.duration_seconds) * 1000;
     const stepMs = 1000;
     let elapsed = 0;
+    let stoppedByUser = false;
     while (elapsed < durationMs) {
       if (isStopRequested()) {
         await turnOffAllRelays();
         clearRunState();
-        clearPendingCommand();
         recordsDb.prepare("UPDATE supply_records SET ended_at = ? WHERE id = ?").run(new Date().toISOString(), recordId);
+        stoppedByUser = true;
         break;
       }
       await delay(Math.min(stepMs, durationMs - elapsed));
       elapsed += stepMs;
     }
 
+    if (stoppedByUser) break;
     if (elapsed >= durationMs) {
       recordsDb.prepare("UPDATE supply_records SET ended_at = ? WHERE id = ?").run(new Date().toISOString(), recordId);
     }

@@ -18,8 +18,8 @@ export default function SupplySettingsPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [timeSlotList, setTimeSlotList] = useState<string[]>([]);
-  const [bulkDurationSeconds, setBulkDurationSeconds] = useState<string>("300");
-  const [activeTab, setActiveTab] = useState<TabId>("mode");
+  const [bulkDurationSeconds, setBulkDurationSeconds] = useState<string>("5");
+  const [activeTab, setActiveTab] = useState<TabId>("trigger");
 
   const load = async () => {
     try {
@@ -52,7 +52,7 @@ export default function SupplySettingsPage() {
 
   const addTimeSlot = () => setTimeSlotList((prev) => [...prev, "08:00"]);
   const removeTimeSlot = (index: number) =>
-    setTimeSlotList((prev) => prev.filter((_, i) => i !== index));
+    setTimeSlotList((prev) => (prev ?? []).filter((_, i) => i !== index));
   const updateTimeSlot = (index: number, value: string) =>
     setTimeSlotList((prev) => prev.map((v, i) => (i === index ? value : v)));
 
@@ -86,7 +86,7 @@ export default function SupplySettingsPage() {
     setSaving(true);
     setMessage(null);
     try {
-      const timeSlotsJson = JSON.stringify(timeSlotList.filter(Boolean));
+      const timeSlotsJson = JSON.stringify((timeSlotList ?? []).filter(Boolean));
       const res = await fetch("/api/settings/supply", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -130,17 +130,27 @@ export default function SupplySettingsPage() {
     );
   }
 
-  const weeklyDays: number[] =
+  // 변경: JSON 파싱 결과가 null/비배열이면 빈 배열로 폴백 (undefined.filter 방지)
+  const rawWeekly =
     mode?.weekly_days != null
       ? typeof mode.weekly_days === "string"
-        ? JSON.parse(mode.weekly_days || "[]")
-        : mode.weekly_days
+        ? (() => {
+            try {
+              const parsed = JSON.parse(mode.weekly_days || "[]");
+              return Array.isArray(parsed) ? parsed : [];
+            } catch {
+              return [];
+            }
+          })()
+        : Array.isArray(mode.weekly_days) ? mode.weekly_days : []
       : [];
+  const weeklyDays: number[] = rawWeekly.filter((d) => typeof d === "number");
 
+  // 탭 순서: 트리거 → 구역 → 방식
   const tabs: { id: TabId; label: string }[] = [
-    { id: "mode", label: "방식" },
     { id: "trigger", label: "트리거" },
     { id: "zones", label: "구역" },
+    { id: "mode", label: "방식" },
   ];
 
   const inputBase = "rounded border border-slate-600 bg-slate-700 text-slate-100 text-xs";

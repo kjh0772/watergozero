@@ -30,34 +30,47 @@ export function isConnected(): boolean {
  * Modbus RTU 연결 초기화
  * @param port 시리얼 포트 (예: COM3, /dev/ttyUSB0)
  * @param baudRate 기본 9600
+ * 변경: 기존 연결을 완전히 닫은 뒤 새 연결 시도 (close 콜백 대기 → 포트 잠금 방지)
  */
 export function initModbus(port: string, baudRate: number = MODBUS_BAUD_RATE): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (client) {
+  const closeExisting = (): Promise<void> =>
+    new Promise((done) => {
+      if (!client) {
+        done();
+        return;
+      }
       try {
-        client.close(() => {
+        (client as ModbusRTU & { close: (cb: () => void) => void }).close(() => {
           client = null;
           currentPort = null;
+          done();
         });
       } catch {
         client = null;
         currentPort = null;
+        done();
       }
-    }
-
-    const c = new ModbusRTU();
-    c.setTimeout(MODBUS_PLC_TIMEOUT_MS);
-    c.connectRTUBuffered(port, { baudRate }, (err: Error | null) => {
-      if (err) {
-        currentPort = null;
-        reject(err);
-        return;
-      }
-      client = c;
-      currentPort = port;
-      resolve();
     });
-  });
+
+  return closeExisting()
+    .then(() => delay(400))
+    .then(
+      () =>
+        new Promise((resolve, reject) => {
+          const c = new ModbusRTU();
+          c.setTimeout(MODBUS_PLC_TIMEOUT_MS);
+          c.connectRTUBuffered(port, { baudRate }, (err: Error | null) => {
+            if (err) {
+              currentPort = null;
+              reject(err);
+              return;
+            }
+            client = c;
+            currentPort = port;
+            resolve();
+          });
+        })
+    );
 }
 
 /** 연결 해제 */

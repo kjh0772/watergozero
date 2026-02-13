@@ -35,7 +35,18 @@ cd go
 - PC에서 **소스 파일만** Pi로 복사 (예: `src/`, `scripts/`, `package.json`, `package-lock.json`, `next.config.ts`, `tsconfig.json` 등).
 - **복사하지 말 것:** `node_modules/`, `.next/`, `data/`(필요 시 빈 폴더만 만들고 Pi에서 DB 초기화).
 
-## 3. Pi에서 설치·빌드·실행 (필수)
+## 3. Modbus 시리얼 포트 권한 (USB-RS485 사용 시)
+
+`/dev/ttyUSB0` 등 시리얼 포트 접근을 위해 **실행 사용자를 dialout 그룹에 추가**하세요. 적용 후 재로그인 또는 재부팅이 필요합니다.
+
+```bash
+sudo usermod -aG dialout $USER
+# 재로그인 또는: sudo reboot
+```
+
+확인: `ls -l /dev/ttyUSB0` → `dialout` 그룹이면, 해당 그룹 소속 사용자는 접근 가능합니다.
+
+## 4. Pi에서 설치·빌드·실행 (필수)
 
 아래는 **전부 라즈베리파이 SSH/터미널에서** 실행합니다.
 
@@ -57,7 +68,31 @@ npm start
 
 이후 브라우저에서 `http://<라즈베리파이-IP>:3000` 으로 접속.
 
-## 4. 백그라운드 실행 (선택)
+## 5. 오류 해결
+
+### Modbus: `Cannot lock port` / `Resource temporarily unavailable`
+
+실행 사용자가 시리얼 포트에 접근할 수 있어야 합니다. **dialout 그룹 추가** 후 재로그인하세요.
+
+```bash
+sudo usermod -aG dialout $USER
+# 재로그인 또는 재부팅
+```
+
+### `routesManifest.dataRoutes is not iterable`
+
+`.next`가 다른 환경(예: Windows)에서 빌드되었거나 손상된 경우 발생합니다. **라즈베리파이에서** 아래를 실행하세요.
+
+```bash
+cd /home/pi/go
+rm -rf .next
+npm run build
+npm start
+```
+
+소스만 Git/복사로 가져왔고 Pi에서 `npm run build`를 한 번도 안 했다면, 반드시 Pi에서 `npm run build` 후 `npm start` 하세요.
+
+## 6. 백그라운드 실행 (선택)
 
 서버를 계속 켜 두려면 `pm2` 또는 systemd를 사용할 수 있습니다.
 
@@ -66,9 +101,10 @@ npm start
 ```bash
 sudo npm install -g pm2
 cd /home/pi/go
-pm2 start npm --name "irrigation" -- start
+pm2 start npm --name "go" -- start
 pm2 save
 pm2 startup   # 부팅 시 자동 실행 설정 (안내에 따라 명령 실행)
+sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u pi --hp /home/pi
 ```
 
 ## 요약

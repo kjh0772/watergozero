@@ -4,7 +4,7 @@
  * 설정2: 시스템설정 - PLC 설정 및 정보, 센서 연결 상태
  */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { PlcSettings, SensorConnection, TankCalibration, TankPumpSettings } from "@/lib/types";
 
 const SENSOR_LABELS: Record<string, string> = {
@@ -31,6 +31,11 @@ export default function SystemSettingsPage() {
   const [modbusSelectedPort, setModbusSelectedPort] = useState("");
   const [modbusConnecting, setModbusConnecting] = useState(false);
 
+  // Coil Test: 1032~1047 수동 ON/OFF
+  const [coilTestCoils, setCoilTestCoils] = useState<boolean[] | null>(null);
+  const [coilTestLoading, setCoilTestLoading] = useState(false);
+  const [coilTestWriting, setCoilTestWriting] = useState(false);
+
   const load = async () => {
     try {
       const res = await fetch("/api/settings/system");
@@ -45,21 +50,69 @@ export default function SystemSettingsPage() {
     }
   };
 
-  const loadModbusStatus = async () => {
+  const loadModbusStatus = useCallback(async () => {
     try {
       const res = await fetch("/api/modbus/status");
       const data = await res.json();
       setModbusConnected(!!data.connected);
       setModbusCurrentPort(data.currentPort ?? null);
       setModbusPorts(Array.isArray(data.ports) ? data.ports : []);
-      if (!modbusSelectedPort && data.currentPort) setModbusSelectedPort(data.currentPort);
-      if (!modbusSelectedPort && data.ports?.[0]) setModbusSelectedPort(data.ports[0]);
+      setModbusSelectedPort((prev) => {
+        if (prev) return prev;
+        if (data.currentPort) return data.currentPort;
+        if (data.ports?.[0]) return data.ports[0];
+        return prev;
+      });
     } catch {
       setModbusConnected(false);
       setModbusCurrentPort(null);
       setModbusPorts([]);
     }
-  };
+  }, []);
+
+  const loadCoilTest = useCallback(async () => {
+    if (!modbusConnected) {
+      setCoilTestCoils(null);
+      return;
+    }
+    setCoilTestLoading(true);
+    try {
+      const res = await fetch("/api/modbus/coils");
+      const data = await res.json();
+      if (res.ok && Array.isArray(data.coils)) {
+        setCoilTestCoils(data.coils.length >= 16 ? data.coils.slice(0, 16) : [...data.coils, ...Array(16 - data.coils.length).fill(false)]);
+      } else {
+        setCoilTestCoils(null);
+      }
+    } catch {
+      setCoilTestCoils(null);
+    } finally {
+      setCoilTestLoading(false);
+    }
+  }, [modbusConnected]);
+
+  const coilTestToggle = useCallback(
+    async (index: number) => {
+      if (coilTestCoils == null || coilTestWriting || index < 0 || index >= 16) return;
+      const next = [...coilTestCoils];
+      next[index] = !next[index];
+      setCoilTestWriting(true);
+      try {
+        const res = await fetch("/api/modbus/coils", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ coils: next }),
+        });
+        if (res.ok) setCoilTestCoils(next);
+        else setMessage("코일 쓰기 실패");
+      } catch (e) {
+        setMessage(e instanceof Error ? e.message : "코일 쓰기 실패");
+      } finally {
+        setCoilTestWriting(false);
+      }
+    },
+    [coilTestCoils, coilTestWriting]
+  );
 
   useEffect(() => {
     load();
@@ -67,12 +120,17 @@ export default function SystemSettingsPage() {
 
   useEffect(() => {
     if (!loading) loadModbusStatus();
-  }, [loading]);
+  }, [loading, loadModbusStatus]);
+
+  useEffect(() => {
+    if (modbusConnected) loadCoilTest();
+    else setCoilTestCoils(null);
+  }, [modbusConnected, loadCoilTest]);
 
   // PLC 설정 로드 시 선택 포트 초기화 (저장된 modbus_port 반영)
   useEffect(() => {
     if (plc?.modbus_port && !modbusSelectedPort) setModbusSelectedPort(plc.modbus_port);
-  }, [plc?.modbus_port]);
+  }, [plc?.modbus_port, modbusSelectedPort]);
 
   const modbusRetry = async () => {
     const port = modbusSelectedPort || plc?.modbus_port || modbusPorts[0];
@@ -185,6 +243,49 @@ export default function SystemSettingsPage() {
             {modbusConnecting ? "연결 중…" : "연결 재시도"}
           </button>
         </div>
+
+        {/* Coil Test: 1032~1047 수동 ON/OFF */}
+        {modbusConnected && (
+          <div className="mt-4 border-t border-slate-600 pt-4">
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="text-sm font-medium text-slate-300">Coil Test (1032~1047)</h3>
+              <button
+                type="button"
+                onClick={loadCoilTest}
+                disabled={coilTestLoading}
+                className="rounded border border-slate-600 bg-slate-700 px-2 py-1 text-xs text-slate-300 hover:bg-slate-600 disabled:opacity-50"
+              >
+                {coilTestLoading ? "읽는 중…" : "새로고침"}
+              </button>
+            </div>
+            {coilTestLoading && coilTestCoils == null ? (
+              <p className="text-xs text-slate-500">코일 상태 읽는 중…</p>
+            ) : (
+              <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-8">
+                {Array.from({ length: 16 }, (_, i) => {
+                  const addr = 1032 + i;
+                  const on = coilTestCoils?.[i] ?? false;
+                  return (
+                    <button
+                      key={addr}
+                      type="button"
+                      onClick={() => coilTestToggle(i)}
+                      disabled={coilTestWriting}
+                      title={`${addr} ${on ? "ON" : "OFF"}`}
+                      className={`rounded px-2 py-1.5 text-xs font-medium transition disabled:opacity-50 ${
+                        on
+                          ? "bg-teal-600 text-white hover:bg-teal-500"
+                          : "bg-slate-700 text-slate-400 hover:bg-slate-600"
+                      }`}
+                    >
+                      {addr}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </section>
 
       {/* PLC 설정 및 정보 */}
