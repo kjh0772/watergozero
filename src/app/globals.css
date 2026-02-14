@@ -2,28 +2,101 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 변경: 시니어 친화 반응형 기본 변수 */
 :root {
   --irrigation-primary: #0d9488;
   --irrigation-secondary: #0f766e;
   --irrigation-accent: #14b8a6;
-  /* HMI 800x480 대응: 한 페이지에 모두 표시 */
-  --hmi-nav-height: 28px;
-  --hmi-main-gap: 6px;
 }
 
+/* 변경: 모바일 시니어 기준 큰 글씨(20px) → md: 일반 데스크톱(16px) */
 body {
-  @apply bg-slate-900 text-slate-100 antialiased;
+  @apply bg-slate-900 text-slate-100 antialiased text-xl md:text-base;
+  /* 모바일 터치 최적화: 300ms 딜레이 제거 */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  /* 안전 영역 (노치 디바이스) */
+  padding-env: safe-area-inset-top safe-area-inset-right safe-area-inset-bottom safe-area-inset-left;
 }
 
-/* HMI 소형 화면: 카드·버튼 컴팩트 */
+/* 변경: 반응형 컴포넌트 — 모바일 큰 터치/글씨 → md: 일반 데스크톱 크기 */
 @layer components {
+  /* 카드 컴포넌트: 모바일 넉넉한 패딩, md: 일반 */
   .card {
-    @apply rounded-lg border border-slate-700 bg-slate-800/80 p-2 shadow;
+    @apply rounded-xl border border-slate-700 bg-slate-800/80 p-5 md:p-4 shadow;
   }
+
+  /* 기본 버튼: 모바일 최소 터치 영역 48px 이상, 큰 글씨 */
   .btn-primary {
-    @apply rounded-md bg-teal-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-teal-500;
+    @apply rounded-xl bg-teal-600 px-6 py-4 text-xl md:px-4 md:py-2.5 md:text-base
+           font-semibold text-white transition
+           hover:bg-teal-500 active:bg-teal-700
+           min-h-[48px] md:min-h-0;
   }
   .btn-secondary {
-    @apply rounded-md border border-slate-600 bg-slate-700 px-3 py-1.5 text-sm font-medium transition hover:bg-slate-600;
+    @apply rounded-xl border border-slate-600 bg-slate-700 px-6 py-4 text-xl md:px-4 md:py-2.5 md:text-base
+           font-semibold transition
+           hover:bg-slate-600 active:bg-slate-800
+           min-h-[48px] md:min-h-0;
+  }
+
+  /* 입력 필드: 모바일 시니어 기준 큰 터치 + 큰 글씨 */
+  .input-field {
+    @apply w-full rounded-xl border border-slate-600 bg-slate-700
+           px-4 py-4 text-xl md:px-3 md:py-2.5 md:text-base
+           text-slate-100
+           focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50
+           min-h-[48px] md:min-h-0;
+  }
+
+  /* 셀렉트 필드 (select 요소용) */
+  .select-field {
+    @apply rounded-xl border border-slate-600 bg-slate-700
+           px-4 py-4 text-xl md:px-3 md:py-2.5 md:text-base
+           text-slate-100
+           focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50
+           min-h-[48px] md:min-h-0;
+  }
+
+  /* 섹션 제목: 모바일 큰 글씨, md: 일반 */
+  .section-title {
+    @apply text-2xl md:text-lg font-bold uppercase tracking-wide text-slate-400;
+  }
+
+  /* 페이지 타이틀 */
+  .page-title {
+    @apply text-3xl md:text-2xl font-bold text-slate-100;
+  }
+
+  /* 라벨 텍스트: 모바일 읽기 쉬운 크기 */
+  .label-text {
+    @apply text-lg md:text-sm text-slate-400 block mb-1;
+  }
+
+  /* 보조 텍스트 */
+  .helper-text {
+    @apply text-base md:text-xs text-slate-500 mt-1;
+  }
+
+  /* 체크박스: 모바일 터치 영역 확대 */
+  .checkbox-senior {
+    @apply text-teal-500 h-7 w-7 md:h-5 md:w-5 rounded;
+  }
+
+  /* 라디오 버튼: 모바일 터치 영역 확대 */
+  .radio-senior {
+    @apply text-teal-500 h-6 w-6 md:h-5 md:w-5;
+  }
+}
+
+/* 스크롤바 최소화 (모바일) */
+@media (max-width: 767px) {
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.3);
+    border-radius: 4px;
   }
 }

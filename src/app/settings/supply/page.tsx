@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * 공급설정 - HMI 800x480: 탭(방식/트리거/구역) 분리, 카드 최적화, 스크롤 없음
+ * 공급설정 - 시니어 친화 큰 글씨 + 반응형 디자인 (모바일 우선)
  */
 
 import { useEffect, useState } from "react";
@@ -73,7 +73,7 @@ export default function SupplySettingsPage() {
         body: JSON.stringify({ mode }),
       });
       if (!res.ok) throw new Error("저장 실패");
-      setMessage("공급 모드 저장됨");
+      setMessage("저장됨: 공급 모드");
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "오류");
     } finally {
@@ -95,7 +95,7 @@ export default function SupplySettingsPage() {
         }),
       });
       if (!res.ok) throw new Error("저장 실패");
-      setMessage("트리거 저장됨");
+      setMessage("저장됨: 트리거");
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "오류");
     } finally {
@@ -114,7 +114,7 @@ export default function SupplySettingsPage() {
         body: JSON.stringify({ zones: zonesToSave }),
       });
       if (!res.ok) throw new Error("저장 실패");
-      setMessage("구역 설정 저장됨");
+      setMessage("저장됨: 구역 설정");
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "오류");
     } finally {
@@ -125,7 +125,7 @@ export default function SupplySettingsPage() {
   if (loading) {
     return (
       <div className="flex min-h-[30vh] items-center justify-center">
-        <p className="text-xs text-slate-400">로딩 중...</p>
+        <p className="text-2xl md:text-xl text-slate-400">로딩 중...</p>
       </div>
     );
   }
@@ -153,29 +153,29 @@ export default function SupplySettingsPage() {
     { id: "mode", label: "방식" },
   ];
 
-  const inputBase = "rounded border border-slate-600 bg-slate-700 text-slate-100 text-xs";
-
-  /* HMI: 뷰포트 높이에 맞춰 스크롤 없이 한 화면 */
   return (
-    <div className="flex max-h-[calc(100vh-4rem)] flex-col gap-1">
+    <div className="flex flex-col gap-5 md:gap-3">
       {/* 메시지 + 탭 바 */}
-      <div className="flex shrink-0 items-center justify-between gap-2">
+      <div className="flex flex-col gap-3">
         {message && (
           <p
-            className={`truncate text-[10px] ${
+            className={`text-xl md:text-base font-medium ${
               message.startsWith("저장") ? "text-teal-400" : "text-red-400"
             }`}
           >
             {message}
           </p>
         )}
-        <div className="ml-auto flex rounded-lg border border-slate-600 bg-slate-800/80 p-0.5">
+        {/* 변경: 모바일 시니어 기준 큰 탭 버튼 — 전체 너비 */}
+        <div className="flex rounded-xl border border-slate-600 bg-slate-800/80 p-1.5 md:p-1 md:w-fit md:ml-auto">
           {tabs.map(({ id, label }) => (
             <button
               key={id}
               type="button"
               onClick={() => setActiveTab(id)}
-              className={`rounded-md px-2 py-1 text-[10px] font-medium transition ${
+              className={`flex-1 md:flex-none rounded-xl px-5 py-3.5 text-xl md:px-4 md:py-2 md:text-base
+                         font-semibold transition min-h-[48px] md:min-h-0
+                         flex items-center justify-center ${
                 activeTab === id
                   ? "bg-teal-600 text-white"
                   : "text-slate-400 hover:text-slate-200"
@@ -187,44 +187,45 @@ export default function SupplySettingsPage() {
         </div>
       </div>
 
-      {/* 탭 패널: 스크롤 없이 한 화면 */}
-      <div className="min-h-0 flex-1 overflow-hidden">
+      {/* 탭 패널 */}
+      <div className="min-h-0 flex-1">
         {activeTab === "mode" && (
-          <section className="card flex h-full min-h-0 flex-col gap-3 py-2 px-2">
-            <h2 className="text-[10px] font-medium uppercase tracking-wide text-slate-400 shrink-0">
-              관수 방식
-            </h2>
-            <div className="flex shrink-0 items-center gap-4">
-              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-600 px-4 py-3 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-900/30">
+          <section className="card flex flex-col gap-5 md:gap-4">
+            <h2 className="section-title">관수 방식</h2>
+            {/* 변경: 시니어 기준 큰 라디오 버튼 + 넓은 터치 영역 */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:gap-3">
+              <label className="flex cursor-pointer items-center gap-4 rounded-xl border-2 border-slate-600 px-6 py-5 md:px-5 md:py-4 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-900/30 transition min-h-[56px] md:min-h-0">
                 <input
                   type="radio"
                   name="supplyMode"
                   checked={mode?.mode === "daily"}
                   onChange={() => setMode((m) => (m ? { ...m, mode: "daily" } : null))}
-                  className="text-teal-500"
+                  className="radio-senior"
                 />
-                <span className="text-sm font-medium text-slate-200">매일</span>
+                <span className="text-xl md:text-lg font-semibold text-slate-200">매일</span>
               </label>
-              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-600 px-4 py-3 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-900/30">
+              <label className="flex cursor-pointer items-center gap-4 rounded-xl border-2 border-slate-600 px-6 py-5 md:px-5 md:py-4 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-900/30 transition min-h-[56px] md:min-h-0">
                 <input
                   type="radio"
                   name="supplyMode"
                   checked={mode?.mode === "weekly"}
                   onChange={() => setMode((m) => (m ? { ...m, mode: "weekly" } : null))}
-                  className="text-teal-500"
+                  className="radio-senior"
                 />
-                <span className="text-sm font-medium text-slate-200">요일별</span>
+                <span className="text-xl md:text-lg font-semibold text-slate-200">요일별</span>
               </label>
             </div>
 
             {mode?.mode === "weekly" && (
-              <div className="flex min-h-0 flex-1 flex-col gap-2">
-                <p className="text-[10px] text-slate-400 shrink-0">공급 요일 선택</p>
-                <div className="grid grid-cols-4 gap-2 sm:grid-cols-7 flex-1 content-start">
+              <div className="flex flex-col gap-3">
+                <p className="text-xl md:text-base text-slate-400">공급 요일 선택</p>
+                <div className="grid grid-cols-4 gap-3 sm:grid-cols-7">
                   {DAY_NAMES.map((name, i) => (
                     <label
                       key={i}
-                      className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-600 bg-slate-700/50 p-3 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-800/50 has-[:checked]:text-teal-200"
+                      className="flex cursor-pointer items-center justify-center rounded-xl border-2 border-slate-600 bg-slate-700/50
+                                 p-4 md:p-3 min-h-[56px] md:min-h-0
+                                 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-800/50 has-[:checked]:text-teal-200 transition"
                     >
                       <input
                         type="checkbox"
@@ -239,7 +240,7 @@ export default function SupplySettingsPage() {
                         }}
                         className="sr-only"
                       />
-                      <span className="text-sm font-medium">{name}</span>
+                      <span className="text-xl md:text-lg font-semibold">{name}</span>
                     </label>
                   ))}
                 </div>
@@ -249,7 +250,7 @@ export default function SupplySettingsPage() {
             <button
               onClick={saveMode}
               disabled={saving}
-              className="btn-primary shrink-0 w-full py-2 text-sm"
+              className="btn-primary w-full"
             >
               저장
             </button>
@@ -257,12 +258,11 @@ export default function SupplySettingsPage() {
         )}
 
         {activeTab === "trigger" && (
-          <section className="card flex h-full min-h-0 flex-col gap-2 py-2 px-2">
-            <h2 className="text-[10px] font-medium uppercase tracking-wide text-slate-400 shrink-0">
-              공급 트리거
-            </h2>
-            <div className="flex shrink-0 items-center gap-4">
-              <label className="flex cursor-pointer items-center gap-2 rounded border border-slate-600 px-3 py-2 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-900/30">
+          <section className="card flex flex-col gap-5 md:gap-3">
+            <h2 className="section-title">공급 트리거</h2>
+            {/* 변경: 시니어 기준 큰 라디오 버튼 */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:gap-3">
+              <label className="flex cursor-pointer items-center gap-4 rounded-xl border-2 border-slate-600 px-6 py-5 md:px-5 md:py-4 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-900/30 transition min-h-[56px] md:min-h-0">
                 <input
                   type="radio"
                   name="trigger"
@@ -270,11 +270,11 @@ export default function SupplySettingsPage() {
                   onChange={() =>
                     setTrigger((t) => (t ? { ...t, trigger_type: "time" } : null))
                   }
-                  className="text-teal-500"
+                  className="radio-senior"
                 />
-                <span className="text-sm text-slate-200">시간 등록</span>
+                <span className="text-xl md:text-lg text-slate-200 font-semibold">시간 등록</span>
               </label>
-              <label className="flex cursor-pointer items-center gap-2 rounded border border-slate-600 px-3 py-2 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-900/30">
+              <label className="flex cursor-pointer items-center gap-4 rounded-xl border-2 border-slate-600 px-6 py-5 md:px-5 md:py-4 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-900/30 transition min-h-[56px] md:min-h-0">
                 <input
                   type="radio"
                   name="trigger"
@@ -282,44 +282,45 @@ export default function SupplySettingsPage() {
                   onChange={() =>
                     setTrigger((t) => (t ? { ...t, trigger_type: "interval" } : null))
                   }
-                  className="text-teal-500"
+                  className="radio-senior"
                 />
-                <span className="text-sm text-slate-200">시간 간격</span>
+                <span className="text-xl md:text-lg text-slate-200 font-semibold">시간 간격</span>
               </label>
             </div>
 
-            {/* 남는 공간 활용: 시간 슬롯 또는 간격 영역을 넓게 */}
             {trigger?.trigger_type === "time" && (
-              <div className="flex min-h-0 flex-1 flex-col gap-2">
-                <div className="flex flex-1 flex-col gap-2 overflow-auto min-h-0">
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                    {timeSlotList.map((slot, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center gap-2 rounded-lg border border-slate-600 bg-slate-700/50 p-2"
+              <div className="flex flex-col gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {timeSlotList.map((slot, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-3 rounded-xl border border-slate-600 bg-slate-700/50 p-4 md:p-3"
+                    >
+                      <input
+                        type="time"
+                        value={slot}
+                        onChange={(e) => updateTimeSlot(index, e.target.value)}
+                        className="input-field min-w-0 flex-1"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeTimeSlot(index)}
+                        disabled={timeSlotList.length <= 1}
+                        className="shrink-0 rounded-xl border border-slate-600 bg-slate-600
+                                   px-4 py-4 md:px-3 md:py-2.5 text-xl md:text-base
+                                   text-slate-300 hover:bg-slate-500
+                                   disabled:opacity-40 transition
+                                   min-h-[48px] md:min-h-0"
                       >
-                        <input
-                          type="time"
-                          value={slot}
-                          onChange={(e) => updateTimeSlot(index, e.target.value)}
-                          className={`${inputBase} min-w-0 flex-1 px-2 py-2 text-sm`}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeTimeSlot(index)}
-                          disabled={timeSlotList.length <= 1}
-                          className="shrink-0 rounded border border-slate-600 bg-slate-600 px-2 py-2 text-xs text-slate-300 hover:bg-slate-500 disabled:opacity-40"
-                        >
-                          삭제
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                        삭제
+                      </button>
+                    </div>
+                  ))}
                 </div>
                 <button
                   type="button"
                   onClick={addTimeSlot}
-                  className="btn-secondary shrink-0 w-full py-2 text-sm"
+                  className="btn-secondary w-full"
                 >
                   + 시간 추가
                 </button>
@@ -327,9 +328,9 @@ export default function SupplySettingsPage() {
             )}
 
             {trigger?.trigger_type === "interval" && (
-              <div className="flex min-h-0 flex-1 flex-col gap-3">
-                <div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-lg border border-slate-600 bg-slate-700/30 p-4">
-                  <label className="text-sm text-slate-300">간격 (분)</label>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col items-center justify-center gap-5 rounded-xl border border-slate-600 bg-slate-700/30 p-6 md:p-5">
+                  <label className="text-xl md:text-lg text-slate-300 font-medium">간격 (분)</label>
                   <input
                     type="number"
                     min={1}
@@ -346,9 +347,9 @@ export default function SupplySettingsPage() {
                           : null
                       )
                     }
-                    className={`${inputBase} w-24 px-4 py-3 text-center text-lg font-mono`}
+                    className="input-field w-36 md:w-32 text-center text-3xl md:text-xl font-mono"
                   />
-                  <div className="flex flex-wrap justify-center gap-2">
+                  <div className="flex flex-wrap justify-center gap-3">
                     {[30, 60, 120, 180].map((mins) => (
                       <button
                         key={mins}
@@ -358,7 +359,8 @@ export default function SupplySettingsPage() {
                             t ? { ...t, interval_minutes: mins } : null
                           )
                         }
-                        className={`rounded-lg border px-3 py-2 text-sm ${
+                        className={`rounded-xl border-2 px-6 py-4 text-xl md:px-4 md:py-2.5 md:text-lg
+                                   font-semibold transition min-h-[48px] md:min-h-0 ${
                           trigger?.interval_minutes === mins
                             ? "border-teal-500 bg-teal-600 text-white"
                             : "border-slate-600 bg-slate-700 text-slate-200 hover:bg-slate-600"
@@ -375,7 +377,7 @@ export default function SupplySettingsPage() {
             <button
               onClick={saveTrigger}
               disabled={saving}
-              className="btn-primary shrink-0 w-full py-2 text-sm"
+              className="btn-primary w-full"
             >
               저장
             </button>
@@ -383,39 +385,114 @@ export default function SupplySettingsPage() {
         )}
 
         {activeTab === "zones" && (
-          <section className="card flex h-full flex-col gap-1 py-1.5 px-2">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[10px] text-slate-400">일괄(초)</span>
+          <section className="card flex flex-col gap-5 md:gap-3">
+            {/* 일괄 설정 */}
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-xl md:text-base text-slate-400 font-medium">일괄(초)</span>
               <input
                 type="number"
                 min={0}
                 value={bulkDurationSeconds}
                 onChange={(e) => setBulkDurationSeconds(e.target.value)}
-                className={`${inputBase} w-14 px-1.5 py-0.5`}
+                className="input-field w-28 md:w-20"
               />
               <button
                 type="button"
                 onClick={applyBulkDuration}
-                className="rounded border border-slate-600 bg-slate-700 px-1.5 py-0.5 text-[10px]"
+                className="rounded-xl border border-slate-600 bg-slate-700
+                           px-5 py-4 md:px-3 md:py-2.5 text-xl md:text-base
+                           font-medium hover:bg-slate-600 transition
+                           min-h-[48px] md:min-h-0"
               >
-                일괄
+                일괄 적용
               </button>
             </div>
-            <div className="flex-1 min-h-0 overflow-hidden">
-              <table className="w-full table-fixed text-left text-[10px]">
+
+            {/* 모바일: 카드 리스트 (시니어 친화) */}
+            <div className="flex flex-col gap-4 md:hidden">
+              {zones.map((z) => (
+                <div key={z.zone_id} className="rounded-xl border border-slate-700 bg-slate-700/30 p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-2xl font-mono font-bold text-slate-200">구역 {z.zone_id}</span>
+                    <label className="flex items-center gap-3">
+                      <span className="text-xl text-slate-400">사용</span>
+                      <input
+                        type="checkbox"
+                        checked={!!z.enabled}
+                        onChange={(e) =>
+                          setZones((prev) =>
+                            prev.map((x) =>
+                              x.zone_id === z.zone_id
+                                ? { ...x, enabled: e.target.checked ? 1 : 0 }
+                                : x
+                            )
+                          )
+                        }
+                        className="checkbox-senior"
+                      />
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="label-text">이름</label>
+                      <input
+                        type="text"
+                        value={z.name}
+                        onChange={(e) =>
+                          setZones((prev) =>
+                            prev.map((x) =>
+                              x.zone_id === z.zone_id
+                                ? { ...x, name: e.target.value }
+                                : x
+                            )
+                          )
+                        }
+                        className="input-field"
+                      />
+                    </div>
+                    <div>
+                      <label className="label-text">초</label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={z.duration_seconds}
+                        onChange={(e) =>
+                          setZones((prev) =>
+                            prev.map((x) =>
+                              x.zone_id === z.zone_id
+                                ? {
+                                    ...x,
+                                    duration_seconds:
+                                      parseInt(e.target.value, 10) || 0,
+                                  }
+                                : x
+                            )
+                          )
+                        }
+                        className="input-field"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* md+: 테이블 (데스크톱 일반 크기) */}
+            <div className="hidden md:block overflow-hidden">
+              <table className="w-full table-fixed text-left text-base">
                 <thead>
                   <tr className="border-b border-slate-600 text-slate-400">
-                    <th className="py-0.5 pr-1">구역</th>
-                    <th className="py-0.5 pr-1">이름</th>
-                    <th className="py-0.5 pr-1">초</th>
-                    <th className="py-0.5">사용</th>
+                    <th className="py-3 pr-2 font-semibold">구역</th>
+                    <th className="py-3 pr-2 font-semibold">이름</th>
+                    <th className="py-3 pr-2 font-semibold">초</th>
+                    <th className="py-3 font-semibold">사용</th>
                   </tr>
                 </thead>
                 <tbody>
                   {zones.map((z) => (
                     <tr key={z.zone_id} className="border-b border-slate-700/50">
-                      <td className="py-0.5 pr-1 font-mono">{z.zone_id}</td>
-                      <td className="py-0.5 pr-1">
+                      <td className="py-2.5 pr-2 font-mono text-lg">{z.zone_id}</td>
+                      <td className="py-2.5 pr-2">
                         <input
                           type="text"
                           value={z.name}
@@ -428,10 +505,10 @@ export default function SupplySettingsPage() {
                               )
                             )
                           }
-                          className={`${inputBase} w-14 px-1 py-0.5`}
+                          className="rounded-lg border border-slate-600 bg-slate-700 text-slate-100 text-base w-24 px-2 py-1.5"
                         />
                       </td>
-                      <td className="py-0.5 pr-1">
+                      <td className="py-2.5 pr-2">
                         <input
                           type="number"
                           min={0}
@@ -449,10 +526,10 @@ export default function SupplySettingsPage() {
                               )
                             )
                           }
-                          className={`${inputBase} w-12 px-1 py-0.5`}
+                          className="rounded-lg border border-slate-600 bg-slate-700 text-slate-100 text-base w-20 px-2 py-1.5"
                         />
                       </td>
-                      <td className="py-0.5">
+                      <td className="py-2.5">
                         <input
                           type="checkbox"
                           checked={!!z.enabled}
@@ -465,7 +542,7 @@ export default function SupplySettingsPage() {
                               )
                             )
                           }
-                          className="text-teal-500"
+                          className="text-teal-500 h-5 w-5"
                         />
                       </td>
                     </tr>
@@ -476,7 +553,7 @@ export default function SupplySettingsPage() {
             <button
               onClick={saveZones}
               disabled={saving}
-              className="btn-primary mt-1 w-fit py-1 px-2 text-xs"
+              className="btn-primary w-full md:w-auto"
             >
               구역 저장
             </button>

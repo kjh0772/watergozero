@@ -2,6 +2,7 @@
 
 /**
  * navbar용 현재시각·버전 간략 표기 (클라이언트 전용)
+ * 변경: 모바일 시니어 기준 큰 글씨 적용, 반응형
  */
 
 import { useEffect, useState } from "react";
@@ -37,7 +38,8 @@ export default function NavbarInfo() {
       : null;
 
   return (
-    <div className="ml-auto flex items-center gap-2 text-[10px] text-slate-400">
+    // 변경: 모바일 text-lg → md: text-sm (시니어 시각 정보 잘 보이게)
+    <div className="ml-auto flex items-center gap-2 text-lg md:text-sm text-slate-400">
       {timeStr != null && (
         <span className="font-mono tabular-nums" title="현재 시각">
           {timeStr}
