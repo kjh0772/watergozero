@@ -1,11 +1,13 @@
 /**
  * 코일 테스트: 1032~1047 코일 읽기(GET) / 쓰기(POST)
+ * POST 시 Modbus(PLC) + Waveshare 8ch 릴레이 보드(1032~1039=Ch1~Ch8) 동시 출력
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { readCoils, writeCoils, isConnected } from "@/lib/modbus/client";
 import { COIL_WRITE_BASE, COIL_WRITE_LENGTH } from "@/lib/modbus/config";
 import { getSystemDb } from "@/lib/db";
+import { writeRelayBoard } from "@/lib/relayBoard/waveshareRpi8ch";
 
 export const dynamic = "force-dynamic";
 
@@ -37,11 +39,8 @@ export async function GET() {
   }
 }
 
-/** 코일 16개 쓰기 (body: { coils: boolean[] }) */
+/** 코일 16개 쓰기 (body: { coils: boolean[] }). Modbus 연결 시 PLC 전송 + 릴레이 보드 8ch 동시 출력 */
 export async function POST(request: NextRequest) {
-  if (!isConnected()) {
-    return NextResponse.json({ error: "Modbus 미연결" }, { status: 503 });
-  }
   try {
     const body = await request.json().catch(() => ({}));
     const coils = body.coils;
@@ -52,8 +51,15 @@ export async function POST(request: NextRequest) {
       );
     }
     const arr = coils.slice(0, COIL_WRITE_LENGTH).map((v: unknown) => Boolean(v));
-    const slaveId = getSlaveId();
-    await writeCoils(COIL_WRITE_BASE, arr, slaveId);
+
+    if (isConnected()) {
+      const slaveId = getSlaveId();
+      await writeCoils(COIL_WRITE_BASE, arr, slaveId);
+    }
+
+    // Waveshare 8ch: 1032~1039 = Ch1~Ch8 (Modbus 유무와 관계없이 Pi에서 출력)
+    writeRelayBoard(arr.slice(0, 8));
+
     return NextResponse.json({ ok: true, coils: arr });
   } catch (e) {
     console.error("modbus coils POST", e);

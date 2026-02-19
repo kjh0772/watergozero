@@ -12,6 +12,7 @@ import {
   getLastTankP1State,
   setLastTankP1State,
 } from "@/lib/control";
+import { getRunStateFromDb } from "@/lib/runStateDb";
 import { APP_VERSION } from "@/lib/version";
 import { getCurrentPort, isConnected } from "@/lib/modbus/client";
 import { startTriggerScheduler, getLastFiredTrigger } from "@/lib/triggerScheduler";
@@ -55,7 +56,9 @@ export async function GET() {
     const cm = cmMin + ((ad - adMin) / (adMax - adMin || 1)) * (cmMax - cmMin);
     const cmRounded = Math.round(cm * 10) / 10;
 
-    const run = getRunState();
+    // DB에 저장된 동작 상태 우선 (시간 트리거 등 모든 경로에서 메인 동작 카드에 반영)
+    const runFromDb = getRunStateFromDb();
+    const run = runFromDb ?? getRunState();
     let p1: number;
     let p2: number;
     if (run.running) {

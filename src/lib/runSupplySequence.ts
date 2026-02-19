@@ -15,6 +15,7 @@ import {
   clearRunState,
   isStopRequested,
 } from "@/lib/control";
+import { persistRunState } from "@/lib/runStateDb";
 import { applyRunStateToModbus, turnOffAllRelays } from "@/lib/modbus/writeRelay";
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -60,6 +61,7 @@ export async function runSupplySequence(): Promise<void> {
     if (isStopRequested()) {
       await turnOffAllRelays();
       clearRunState();
+      persistRunState(null);
       clearPendingCommand();
       break;
     }
@@ -76,6 +78,7 @@ export async function runSupplySequence(): Promise<void> {
       pumps: { p1: 1, p2: 1 },
       valves,
     });
+    persistRunState(getRunState());
     await applyRunStateToModbus(valves, { p1: 1, p2: 1 });
 
     const startedAt = new Date().toISOString();
@@ -94,6 +97,7 @@ export async function runSupplySequence(): Promise<void> {
       if (isStopRequested()) {
         await turnOffAllRelays();
         clearRunState();
+        persistRunState(null);
         recordsDb.prepare("UPDATE supply_records SET ended_at = ? WHERE id = ?").run(new Date().toISOString(), recordId);
         stoppedByUser = true;
         break;
@@ -110,5 +114,6 @@ export async function runSupplySequence(): Promise<void> {
 
   await turnOffAllRelays();
   clearRunState();
+  persistRunState(null);
   clearPendingCommand();
 }

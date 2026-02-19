@@ -3,4 +3,4 @@
  * CHANGELOG.md 와 동기화
  */
 
-export const APP_VERSION = "0.2";
+export const APP_VERSION = "0.3";

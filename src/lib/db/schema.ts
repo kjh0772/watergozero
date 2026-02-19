@@ -53,6 +53,20 @@ CREATE TABLE IF NOT EXISTS tank_pump_settings (
 );
 `;
 
+// 시스템설정 DB: 현재 공급 동작 상태 (메인 동작 카드 표시용, 트리거/API 간 공유)
+export const RUN_STATE_SCHEMA = `
+CREATE TABLE IF NOT EXISTS run_state (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  running INTEGER NOT NULL DEFAULT 0,
+  current_zone INTEGER,
+  current_zone_started_at INTEGER,
+  current_zone_duration INTEGER,
+  pumps_json TEXT DEFAULT '{"p1":0,"p2":0}',
+  valves_json TEXT DEFAULT '[]',
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+`;
+
 // 공급설정 DB: 관수 방식 (요일별/매일)
 export const SUPPLY_MODE_SCHEMA = `
 CREATE TABLE IF NOT EXISTS supply_mode (
@@ -106,6 +120,7 @@ export const SYSTEM_SCHEMAS = [
   SENSOR_CONNECTIONS_SCHEMA,
   TANK_CALIBRATION_SCHEMA,
   TANK_PUMP_SETTINGS_SCHEMA,
+  RUN_STATE_SCHEMA,
 ];
 
 export const SUPPLY_SCHEMAS = [

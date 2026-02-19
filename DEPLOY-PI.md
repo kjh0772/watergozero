@@ -46,6 +46,43 @@ sudo usermod -aG dialout $USER
 
 확인: `ls -l /dev/ttyUSB0` → `dialout` 그룹이면, 해당 그룹 소속 사용자는 접근 가능합니다.
 
+### 3.1 Waveshare RPi Relay Board (B) 8ch 사용 시 (선택)
+
+[Waveshare RPi Relay Board (B)](https://www.waveshare.com/wiki/RPi_Relay_Board_(B)#WiringPi)를 사용하면 **1032~1039(Modbus 코일)가 보드 Ch1~Ch8과 동시에 출력**됩니다. `EACCES: permission denied, open '/sys/class/gpio/gpio5/value'` 오류가 나면 아래 순서대로 진행하세요.
+
+**1) gpio 그룹 생성(없을 때만) 및 사용자 추가**
+
+```bash
+sudo groupadd -f gpio
+sudo usermod -aG gpio $USER
+```
+
+**2) udev 규칙 설치** — GPIO export 시 생성되는 `gpio*` 디렉터리를 `gpio` 그룹이 쓰기 가능하도록 설정
+
+프로젝트에 `scripts/99-gpio-sysfs.rules`가 있으면 복사해서 쓰고, 없으면 Pi에서 규칙 파일을 직접 만드세요.
+
+```bash
+# 방법 A: 프로젝트에 파일이 있을 때
+cd /home/pi/go
+sudo cp scripts/99-gpio-sysfs.rules /etc/udev/rules.d/
+
+# 방법 B: 파일이 없을 때 Pi에서 직접 생성 (아래 블록 전체 복사 후 터미널에 붙여넣기)
+sudo tee /etc/udev/rules.d/99-gpio-sysfs.rules << 'ENDRULE'
+SUBSYSTEM=="gpio", KERNEL=="gpio*", ACTION=="add", RUN+="/bin/sh -c 'chown -R root:gpio /sys/class/gpio && chmod -R 770 /sys/class/gpio'"
+ENDRULE
+
+sudo udevadm control --reload-rules
+```
+
+**3) 재로그인 또는 재부팅**
+
+```bash
+# SSH 세션이라면 로그아웃 후 다시 로그인하거나
+sudo reboot
+```
+
+재부팅하면 기존에 export된 GPIO가 해제되고, 앱 실행 시 다시 export되면서 udev 규칙이 적용됩니다. 재로그인만 했다면 이미 `gpio5` 등이 존재할 수 있어, 그때는 한 번 `sudo reboot` 후 앱을 다시 실행하는 것이 확실합니다. 여전히 권한 오류가 나면 `groups`로 `gpio` 포함 여부를 확인하고, 필요 시 `sudo npm start`로 실행해 보세요.
+
 ## 4. Pi에서 설치·빌드·실행 (필수)
 
 아래는 **전부 라즈베리파이 SSH/터미널에서** 실행합니다.
@@ -77,6 +114,18 @@ npm start
 ```bash
 sudo usermod -aG dialout $USER
 # 재로그인 또는 재부팅
+```
+
+### 릴레이 보드: `EACCES: permission denied, open '/sys/class/gpio/gpio5/value'`
+
+GPIO sysfs에 쓸 권한이 없을 때 발생합니다. **§3.1**대로 udev 규칙 설치와 `gpio` 그룹 추가 후 재로그인하세요. 요약:
+
+```bash
+sudo groupadd -f gpio
+sudo usermod -aG gpio $USER
+sudo cp scripts/99-gpio-sysfs.rules /etc/udev/rules.d/
+sudo udevadm control --reload-rules
+# 재로그인 또는 sudo reboot
 ```
 
 ### `routesManifest.dataRoutes is not iterable`

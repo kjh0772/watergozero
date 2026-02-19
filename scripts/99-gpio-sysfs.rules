@@ -1,0 +1,5 @@
+# GPIO sysfs: gpio 그룹에 /sys/class/gpio 읽기·쓰기 허용 (Waveshare 릴레이 보드 등)
+# 설치: sudo cp scripts/99-gpio-sysfs.rules /etc/udev/rules.d/
+#       sudo udevadm control --reload-rules
+#       사용자를 gpio 그룹에 추가: sudo usermod -aG gpio $USER 후 재로그인
+SUBSYSTEM=="gpio", KERNEL=="gpio*", ACTION=="add", RUN+="/bin/sh -c 'chown -R root:gpio /sys/class/gpio && chmod -R 770 /sys/class/gpio'"

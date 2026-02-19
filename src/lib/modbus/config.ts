@@ -46,15 +46,12 @@ export const COIL_INDEX_RAIN_SENSOR = 0;
 export const COIL_WRITE_BASE = 1032;
 export const COIL_WRITE_LENGTH = 16;
 
-/** 출력 릴레이 (고정): 코일 0~3=P1~P4(1032~1035), 4~15=밸브0~11(1036~1047) */
+/** 출력 릴레이 (고정): 코일 0=펌프 P1(1032), 1~15=밸브0~14(1033~1047, 구역 1~15) */
 export const RELAY_INDEX_P1 = 0;
-export const RELAY_INDEX_P2 = 1;
-export const RELAY_INDEX_P3 = 2;
-export const RELAY_INDEX_P4 = 3;
-export const RELAY_INDEX_VALVE_START = 4;
+export const RELAY_INDEX_VALVE_START = 1;
 export const RELAY_INDEX_VALVE_END = 15;
 /** 코일에 매핑된 구역 밸브 수 */
-export const RELAY_VALVE_COUNT = 12;
+export const RELAY_VALVE_COUNT = 15;
 
 /** 단일 코일 API: plcAddress = COIL_API_BASE + address */
 export const COIL_API_BASE = 1000;
