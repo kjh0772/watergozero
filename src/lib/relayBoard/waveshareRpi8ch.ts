@@ -71,15 +71,23 @@ function ensureInit(): boolean {
 }
 
 /**
+ * true=ON일 때 GPIO 출력 (보드에 따라 반전 필요 시 RELAY_ACTIVE_LOW 변경)
+ * Waveshare (B): Low=ON → true면 "0". 일부 보드는 High=ON → true면 "1"로 바꿔야 함.
+ */
+const RELAY_ACTIVE_LOW = process.env.RELAY_ACTIVE_LOW !== "0";
+
+/**
  * 코일 상태 8개를 릴레이 보드 Ch1~Ch8에 출력.
- * true=ON → GPIO 0, false=OFF → GPIO 1 (active-low)
+ * RELAY_ACTIVE_LOW=true(기본): true=ON → GPIO 0 (Waveshare 등)
+ * RELAY_ACTIVE_LOW=false: true=ON → GPIO 1 (High=ON 보드)
  * @param coils 최소 8개. 인덱스 0~7이 Ch1~Ch8에 대응 (1032~1039)
  */
 export function writeRelayBoard(coils: boolean[]): void {
   if (!ensureInit() || !valuePaths) return;
   for (let i = 0; i < RELAY_CHANNELS && i < coils.length; i++) {
     try {
-      const v = coils[i] ? "0" : "1";
+      const on = coils[i];
+      const v = RELAY_ACTIVE_LOW ? (on ? "0" : "1") : (on ? "1" : "0");
       fs.writeFileSync(valuePaths[i], v, "utf8");
     } catch (e) {
       console.warn("relayBoard write channel", i + 1, e);

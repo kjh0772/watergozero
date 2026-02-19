@@ -118,7 +118,8 @@ await initModbus(tryPort);
 | 1038 | 6 | Channel 7 | 21 | 밸브 5 (구역 6) |
 | 1039 | 7 | Channel 8 | 26 | 밸브 6 (구역 7) |
 
-- **동작**: 릴레이는 Low 레벨 동작(출력 0 = 릴레이 ON). 코드: `lib/relayBoard/waveshareRpi8ch.ts` (Linux sysfs GPIO만 사용, 별도 패키지 없음).
+- **동작**: 기본은 **Low=ON**(Waveshare (B)). 코드: `lib/relayBoard/waveshareRpi8ch.ts`.
+- **릴레이가 반대로 켜질 때**: High=ON 보드라면 앱 실행 전에 `RELAY_ACTIVE_LOW=0` 설정. 예: `RELAY_ACTIVE_LOW=0 npm start` 또는 `.env`에 `RELAY_ACTIVE_LOW=0` 추가.
 - **범위**: 1040~1047(코일 8~15)은 Modbus(PLC)만 해당하며, 로컬 8ch 보드에는 해당 없음.
 
 ### 3.3 API를 통한 단일 코일 제어

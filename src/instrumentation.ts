@@ -13,6 +13,15 @@ const isPortLockError = (e: unknown): boolean => {
 export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
 
+  // 시작 시 모든 릴레이 OFF (Modbus·로컬 8ch 보드 초기 상태)
+  try {
+    const { turnOffAllRelays } = await import("@/lib/modbus/writeRelay");
+    await turnOffAllRelays();
+    console.log("[시작] 릴레이 전체 OFF 적용");
+  } catch (e) {
+    console.warn("[시작] 릴레이 OFF 적용 스킵:", e instanceof Error ? e.message : e);
+  }
+
   // 공급 트리거 스케줄러 (시간 등록/간격 — 60초마다 조건 확인)
   const { startTriggerScheduler } = await import("@/lib/triggerScheduler");
   startTriggerScheduler();
@@ -46,10 +55,12 @@ export async function register() {
   await new Promise((r) => setTimeout(r, 3000));
 
   const { initModbus } = await import("@/lib/modbus/client");
+  const { turnOffAllRelays } = await import("@/lib/modbus/writeRelay");
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       await initModbus(port, baudRate);
       console.log("[Modbus] 서버 시작 시 자동 연결:", port);
+      await turnOffAllRelays();
       return;
     } catch (e) {
       if (attempt === 0 && isPortLockError(e)) {

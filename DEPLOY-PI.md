@@ -83,6 +83,47 @@ sudo reboot
 
 재부팅하면 기존에 export된 GPIO가 해제되고, 앱 실행 시 다시 export되면서 udev 규칙이 적용됩니다. 재로그인만 했다면 이미 `gpio5` 등이 존재할 수 있어, 그때는 한 번 `sudo reboot` 후 앱을 다시 실행하는 것이 확실합니다. 여전히 권한 오류가 나면 `groups`로 `gpio` 포함 여부를 확인하고, 필요 시 `sudo npm start`로 실행해 보세요.
 
+**4) 부팅 시 GPIO udev 자동 적용 (선택)**
+
+아래 전체를 복사해서 Pi 터미널에 **한 번에 붙여넣기** 하면 됩니다. 프로젝트 경로가 `/home/pi/go`가 아니면 붙여넣기 전에 `go`를 폴더 이름으로 바꾸세요.
+
+```
+mkdir -p /home/pi/go/scripts
+sudo tee /home/pi/go/scripts/99-gpio-sysfs.rules << 'ENDRULE'
+SUBSYSTEM=="gpio", KERNEL=="gpio*", ACTION=="add", RUN+="/bin/sh -c 'chown -R root:gpio /sys/class/gpio && chmod -R 770 /sys/class/gpio'"
+ENDRULE
+sudo chown pi:pi /home/pi/go/scripts/99-gpio-sysfs.rules
+cat > /home/pi/go/scripts/gpio-udev-boot.sh << 'EOF'
+#!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+RULES_SRC="${SCRIPT_DIR}/99-gpio-sysfs.rules"
+RULES_DST="/etc/udev/rules.d/99-gpio-sysfs.rules"
+if [ -f "$RULES_SRC" ]; then
+  cp "$RULES_SRC" "$RULES_DST" 2>/dev/null && udevadm control --reload-rules
+fi
+EOF
+chmod +x /home/pi/go/scripts/gpio-udev-boot.sh
+sudo tee /etc/systemd/system/gpio-udev-boot.service << 'EOF'
+[Unit]
+Description=GPIO udev rules apply (watergozero relay board)
+After=systemd-udevd.service
+Before=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/pi/go/scripts/gpio-udev-boot.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+sudo systemctl daemon-reload
+sudo systemctl enable gpio-udev-boot.service
+sudo systemctl start gpio-udev-boot.service
+```
+
+이후 재부팅해도 GPIO udev 규칙이 부팅 시 자동 적용됩니다. 비활성화: `sudo systemctl disable gpio-udev-boot.service`
+
 ## 4. Pi에서 설치·빌드·실행 (필수)
 
 아래는 **전부 라즈베리파이 SSH/터미널에서** 실행합니다.
