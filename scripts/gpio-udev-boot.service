@@ -1,0 +1,13 @@
+[Unit]
+Description=GPIO udev rules apply (watergozero relay board)
+After=systemd-udevd.service
+Before=network.target
+
+[Service]
+Type=oneshot
+# 프로젝트 경로가 /home/pi/go 가 아니면 아래 경로를 수정하세요
+ExecStart=/home/pi/go/scripts/gpio-udev-boot.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
